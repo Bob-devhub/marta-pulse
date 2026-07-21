@@ -1,4 +1,4 @@
 environment: prod
-fabric_workspace_id: "<prod workspace guid>"
+fabric_workspace_id: "80b430c7-cc88-445d-a14e-82066b75093d"
 function_app_name: func-martapulse-prod
 approvals: ADO environment 'marta-pulse-prod' requires manual approval.

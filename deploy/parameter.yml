@@ -16,5 +16,5 @@ find_replace:
   # ADLS/HTTP connection GUID used by the GTFS static pipeline copy activity
   - find_value: "00000000-0000-0000-0000-0000000conn1"
     replace_value:
-      test: "11111111-replace-with-test-connection"
-      prod: "22222222-replace-with-prod-connection"
+      test: "a7ba572b-71a8-46a3-8b19-07f7e90b04b3"
+      prod: "80b430c7-cc88-445d-a14e-82066b75093d"
