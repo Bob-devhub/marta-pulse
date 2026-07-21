@@ -7,6 +7,7 @@ lakehouse IDs, Eventstream endpoints differ across dev/test/prod).
 
 import argparse
 
+from azure.identity import DefaultAzureCredential
 from fabric_cicd import FabricWorkspace, publish_all_items, unpublish_all_orphan_items
 
 ITEM_TYPES = [
@@ -35,6 +36,9 @@ def main() -> None:
         repository_directory=args.repo_dir,
         item_type_in_scope=ITEM_TYPES,
         environment=args.environment,
+        # Required by current fabric-cicd. On the runner this resolves via the
+        # azure/login OIDC session (AzureCliCredential); locally via az login.
+        token_credential=DefaultAzureCredential(),
     )
     publish_all_items(ws)
     unpublish_all_orphan_items(ws, item_name_exclude_regex="^DO_NOT_DELETE.*")
