@@ -1,0 +1,12 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Notebook",
+    "displayName": "NB_Silver_Schedule_Conform",
+    "description": "Conform schedule dims with SCD2 on feed version"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "27251a49-04de-4950-97ab-31a12a481fee"
+  }
+}

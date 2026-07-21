@@ -1,0 +1,8 @@
+azure-functions>=1.20
+azure-eventhub>=5.11
+requests>=2.32
+gtfs-realtime-bindings>=1.0.0
+protobuf>=4.25
+# The marta-pulse wheel line is appended at deploy time (CD pipeline or the
+# manual publish step). Do NOT commit a hard-coded wheel filename here — a
+# stale pin caused a silent version mismatch in the first build.

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "DataPipeline",
+    "displayName": "PL_GTFS_Static_Ingest",
+    "description": "Weekly GTFS static download and Bronze/Silver orchestration"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "9724ac06-b1a0-4342-b76f-984ab341b3c7"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Notebook",
+    "displayName": "NB_Silver_Telemetry_Stream",
+    "description": "Incremental telemetry conformance with DQ quarantine"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "653f8670-b844-4fb6-a70a-65281f0bdafe"
+  }
+}

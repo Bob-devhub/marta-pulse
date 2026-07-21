@@ -1,0 +1,12 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Notebook",
+    "displayName": "NB_Gold_Headway_Bunching",
+    "description": "Headway facts, bunching events, OTP aggregates"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "cc4b2454-e47f-46e8-af24-c01e7320fdd1"
+  }
+}

@@ -1,0 +1,3 @@
+environment: test
+fabric_workspace_id: "<test workspace guid>"
+function_app_name: func-martapulse-test

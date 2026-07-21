@@ -1,0 +1,12 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Notebook",
+    "displayName": "NB_Gold_Deviation",
+    "description": "Schedule deviation fact: observed vs scheduled stop times"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "890f450e-bc7c-447e-84e3-f7c7d4b2b0fb"
+  }
+}

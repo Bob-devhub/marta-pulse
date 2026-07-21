@@ -1,0 +1,37 @@
+{
+  "properties": {
+    "description": "Fast loop (schedule every 15-30 min): Silver telemetry conformance -> Gold deviation -> Gold headway/bunching. Separate from PL_GTFS_Static_Ingest, which is the WEEKLY schedule-reference path. After Git sync, re-select each notebook in the activity settings (placeholder GUIDs); leave Connection fields empty.",
+    "activities": [
+      {
+        "name": "SilverTelemetryConform",
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "00000000-0000-0000-0000-0000000nb001",
+          "workspaceId": "00000000-0000-0000-0000-0000000wsdev"
+        }
+      },
+      {
+        "name": "GoldDeviation",
+        "type": "TridentNotebook",
+        "dependsOn": [
+          { "activity": "SilverTelemetryConform", "dependencyConditions": ["Succeeded"] }
+        ],
+        "typeProperties": {
+          "notebookId": "00000000-0000-0000-0000-0000000nb002",
+          "workspaceId": "00000000-0000-0000-0000-0000000wsdev"
+        }
+      },
+      {
+        "name": "GoldHeadwayBunching",
+        "type": "TridentNotebook",
+        "dependsOn": [
+          { "activity": "GoldDeviation", "dependencyConditions": ["Succeeded"] }
+        ],
+        "typeProperties": {
+          "notebookId": "00000000-0000-0000-0000-0000000nb003",
+          "workspaceId": "00000000-0000-0000-0000-0000000wsdev"
+        }
+      }
+    ]
+  }
+}

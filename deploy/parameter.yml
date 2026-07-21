@@ -1,0 +1,20 @@
+# fabric-cicd find/replace parameterization.
+# Values swapped per environment at publish time.
+find_replace:
+  # Lakehouse binding inside notebooks (dev GUID -> env GUID)
+  - find_value: "00000000-0000-0000-0000-00000000dev1"   # dev MartaPulse_LH id
+    replace_value:
+      test: "$items.Lakehouse.MartaPulse_LH.id"
+      prod: "$items.Lakehouse.MartaPulse_LH.id"
+
+  # Dev workspace GUID referenced in notebook metadata
+  - find_value: "00000000-0000-0000-0000-0000000wsdev"
+    replace_value:
+      test: "$workspace.id"
+      prod: "$workspace.id"
+
+  # ADLS/HTTP connection GUID used by the GTFS static pipeline copy activity
+  - find_value: "00000000-0000-0000-0000-0000000conn1"
+    replace_value:
+      test: "11111111-replace-with-test-connection"
+      prod: "22222222-replace-with-prod-connection"

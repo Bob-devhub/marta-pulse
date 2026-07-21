@@ -1,0 +1,13 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "BUS_VP_URL": "<MARTA bus GTFS-RT VehiclePositions URL from itsmarta.com developer page>",
+    "BUS_TU_URL": "<MARTA bus GTFS-RT TripUpdates URL from itsmarta.com developer page>",
+    "RAIL_API_URL": "https://developerservices.itsmarta.com:18096/itsmarta/railrealtimearrivals/developerservices/traindata",
+    "RAIL_API_KEY": "<your key from MARTA developer signup>",
+    "EVENTSTREAM_CONNECTION": "<Event Hub-compatible connection string from Eventstream custom endpoint source>",
+    "EVENTSTREAM_NAME": "<entity name from the same Eventstream source pane>"
+  }
+}

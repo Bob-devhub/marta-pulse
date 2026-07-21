@@ -1,0 +1,31 @@
+// MartaPulse_KQLDB bootstrap — canonical telemetry table + update policy
+// event_ts is datetime: marta_pulse >=0.2.0 normalizes ALL modes (incl. rail)
+// to ISO-8601 UTC at the source, so Kusto parses it natively. This table is
+// the single Bronze write path — OneLake availability mirrors it to Delta,
+// and the Lakehouse surfaces it via a shortcut named bronze.raw_events.
+.create table raw_events (
+    event_id: string, schema_version: string, mode: string, event_type: string,
+    vehicle_id: string, trip_id: string, route_id: string, stop_id: string,
+    stop_sequence: int, lat: real, lon: real, bearing: real,
+    delay_seconds: int, event_ts: datetime, ingest_ts: datetime, source_feed: string
+)
+
+.create table raw_events ingestion json mapping 'canonical_v1'
+'[{"column":"event_id","path":"$.event_id"},{"column":"schema_version","path":"$.schema_version"},{"column":"mode","path":"$.mode"},{"column":"event_type","path":"$.event_type"},{"column":"vehicle_id","path":"$.vehicle_id"},{"column":"trip_id","path":"$.trip_id"},{"column":"route_id","path":"$.route_id"},{"column":"stop_id","path":"$.stop_id"},{"column":"stop_sequence","path":"$.stop_sequence"},{"column":"lat","path":"$.lat"},{"column":"lon","path":"$.lon"},{"column":"bearing","path":"$.bearing"},{"column":"delay_seconds","path":"$.delay_seconds"},{"column":"event_ts","path":"$.event_ts"},{"column":"ingest_ts","path":"$.ingest_ts"},{"column":"source_feed","path":"$.source_feed"}]'
+
+// Live-map materialized view: latest position per vehicle
+.create materialized-view with (backfill=false) latest_positions on table raw_events
+{
+    raw_events
+    | where event_type in ('vehicle_position', 'rail_arrival') and isnotnull(lat)
+    | summarize arg_max(ingest_ts, *) by vehicle_id
+}
+
+// Bunching detector feed for Activator: delay spikes per route, 5-min bins
+.create materialized-view with (backfill=false) route_delay_5m on table raw_events
+{
+    raw_events
+    | where isnotnull(delay_seconds)
+    | summarize avg_delay = avg(delay_seconds), events = count()
+        by route_id, bin(ingest_ts, 5m)
+}

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Notebook",
+    "displayName": "NB_Bronze_GTFS_Unzip",
+    "description": "Unzip GTFS static, version-hash, land Bronze Delta"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "fce3dcb2-3c6e-4601-8ea9-7ee4e44f957a"
+  }
+}

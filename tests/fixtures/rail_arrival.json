@@ -1,0 +1,15 @@
+{
+  "DESTINATION": "Airport",
+  "DIRECTION": "S",
+  "EVENT_TIME": "07/08/2026 11:50:06 AM",
+  "IS_REALTIME": "true",
+  "LINE": "RED",
+  "NEXT_ARR": "11:52:49 AM",
+  "STATION": "AIRPORT STATION",
+  "TRAIN_ID": "401",
+  "WAITING_SECONDS": "107",
+  "WAITING_TIME": "1 min",
+  "DELAY": "T582S",
+  "LATITUDE": "33.660274",
+  "LONGITUDE": "-84.447091"
+}

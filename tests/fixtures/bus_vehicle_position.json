@@ -1,0 +1,10 @@
+{
+  "id": "1001",
+  "vehicle": {
+    "trip": { "tripId": "8574123", "routeId": "110", "directionId": 0 },
+    "position": { "latitude": 33.7756, "longitude": -84.3963, "bearing": 270.0 },
+    "timestamp": "1751980000",
+    "stopId": "907933",
+    "vehicle": { "id": "1478", "label": "1478" }
+  }
+}

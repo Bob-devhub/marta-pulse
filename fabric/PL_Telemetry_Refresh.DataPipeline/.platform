@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "DataPipeline",
+    "displayName": "PL_Telemetry_Refresh"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "436106f9-81e7-4f44-bb29-578a9b4d807b"
+  }
+}

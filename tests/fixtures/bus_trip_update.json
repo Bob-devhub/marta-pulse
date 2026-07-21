@@ -1,0 +1,12 @@
+{
+  "id": "tu-8574123",
+  "tripUpdate": {
+    "trip": { "tripId": "8574123", "routeId": "110" },
+    "vehicle": { "id": "1478" },
+    "timestamp": "1751980000",
+    "stopTimeUpdate": [
+      { "stopSequence": 12, "stopId": "907933", "arrival": { "delay": 240, "time": "1751980240" } },
+      { "stopSequence": 13, "stopId": "907934", "arrival": { "delay": 300, "time": "1751980540" } }
+    ]
+  }
+}

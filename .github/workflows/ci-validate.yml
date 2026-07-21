@@ -1,0 +1,59 @@
+# CI: runs on every PR into main. Lint, test, build the wheel,
+# and sanity-check Fabric notebook sources.
+name: ci-validate
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install tooling and marta_pulse (editable)
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff pytest build
+          pip install -e ".[dev]"
+
+      - name: Ruff lint
+        run: ruff check src functions tests
+
+      # Notebooks are plain .py — compile them so cell-order bugs
+      # (e.g. name used before its import cell) fail in CI, not in Fabric.
+      - name: Compile-check Fabric notebooks
+        run: |
+          python -m compileall -q fabric
+          python - << 'PY'
+          import pathlib
+          for nb in pathlib.Path("fabric").glob("NB_*.Notebook/notebook-content.py"):
+              head = nb.read_text().splitlines()[0]
+              if head.strip() != "# Fabric notebook source":
+                  raise SystemExit(f"Invalid Fabric notebook header: {nb}")
+              print(f"{nb}: OK")
+          PY
+
+      - name: Unit tests (golden GTFS time/service-day cases)
+        run: pytest tests -q --junitxml=test-results.xml
+
+      - name: Publish test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results.xml
+
+      - name: Build marta_pulse wheel
+        run: python -m build --wheel --outdir dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheel
+          path: dist/*.whl

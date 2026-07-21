@@ -1,0 +1,4 @@
+environment: dev
+fabric_workspace_id: "<dev workspace guid>"
+function_app_name: func-martapulse-dev
+notes: Dev workspace is Git-synced to feature branches; never deployed via fabric-cicd.
