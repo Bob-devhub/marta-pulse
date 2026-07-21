@@ -73,6 +73,9 @@ jobs:
 
   deploy-fabric-test:
     needs: build
+    # Skips cleanly until the test workspace exists and its ID is configured
+    # as a repo variable (Phase 8).
+    if: vars.FABRIC_WORKSPACE_ID_TEST != ''
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -94,6 +97,7 @@ jobs:
 
   deploy-fabric-prod:
     needs: [deploy-fabric-test, deploy-function]
+    if: vars.FABRIC_WORKSPACE_ID_PROD != ''
     runs-on: ubuntu-latest
     environment: production   # approval gate lives here
     steps:
