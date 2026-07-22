@@ -129,3 +129,55 @@ changed (in code or in process) so the rebuild doesn't repeat it.
     `google_transit_feed/google_transit.zip` (with `_feed`).
 27. **~52% of stop events run early** (>1 min ahead) vs 2.6% late — schedule
     padding is the headline analytical finding, not a data bug.
+
+## Build #2 — GitHub Actions + Fabric promotion
+
+31. **CD triggers watch `main`.** A fix committed to a feature branch never
+    deploys — and pushing the same tree from two different local folders
+    creates unrelated histories on the remote. One working clone
+    (`C:\dev\marta-pulse`), work on main or PR into it, period.
+32. **GitHub OIDC subjects are ID-augmented** (2026 format):
+    `repo:Owner@<accountId>/repo@<repoId>:ref:refs/heads/main`. Don't type
+    the subject from docs — copy it VERBATIM from the failed `azure/login`
+    log ("subject claim - ..."). One federated credential per trust path
+    (branch push + each protected environment). In PowerShell,
+    `--parameters "@file.json"` needs the `@`; in bash, inline JSON in
+    single quotes is easier. AADSTS70025 = no credentials at all;
+    "no matching record" = subject mismatch.
+33. **fabric-cicd's current API requires `token_credential`** —
+    `DefaultAzureCredential()` picks up the `azure/login` OIDC session on
+    runners and `az login` locally. Pin or re-test on fabric-cicd upgrades;
+    the constructor signature has changed before.
+34. **Deleting a Function App orphans its role assignments.** The Bicep's
+    deterministic `guid()` names then collide with the orphans on redeploy
+    (`RoleAssignmentUpdateNotPermitted` — principalId can't be updated).
+    Delete the stale assignments at each scope before redeploying a
+    recreated identity.
+35. **Y1 → FC1 is not an in-place update.** Delete the app AND plan, then
+    deploy fresh. Watch the deploy action's log line "Detected function app
+    sku:" — if it says Consumption, you're deploying to the old app, and on
+    Linux Consumption the action skips the build (RUN_FROM_PACKAGE), so
+    dependencies silently never install.
+36. **Tenant setting scoped to a security group:** the SP must be a member
+    of that group (object id, not app id), and membership takes ~15 min to
+    propagate into Fabric.
+37. **`parameter.yml` must live INSIDE the fabric-cicd repository directory**
+    (`fabric/parameter.yml`) — anywhere else it's silently skipped
+    ("Parameter file not found" is only a warning).
+38. **`$items.<Type>.<Name>.id` only resolves for items the repo deploys.**
+    Placeholder-only folders don't count. Either commit the real item
+    definition, or pre-create an item with the SAME name in the target
+    workspace — fabric-cicd matches by type + displayName and adopts it.
+39. **Pipelines carry three GUID flavors:** (a) tenant-scoped connection ids
+    — share the connection with the SP (Manage connections and gateways) or
+    item creation fails with a generic POST error; (b) the lakehouse
+    `artifactId` in linkedService, exported in byte-shuffled form that
+    equals the item's logicalId — map that exact string in parameter.yml;
+    (c) `workspaceId` of all zeros means "this workspace" and needs no
+    mapping.
+40. **fabric-cicd deploys items, not state.** Promoted lakehouses still need
+    one-time provisioning: bronze/silver/gold schemas, the `raw_events`
+    shortcut, and an Environment with the current wheel set as default.
+
+*Standing practice: every issue hit and resolved in this project gets an
+entry here, in the same commit as (or right after) the fix.*
