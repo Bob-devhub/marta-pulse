@@ -1,0 +1,60 @@
+# fabric-cicd find/replace parameterization.
+# Lives INSIDE the fabric/ repository directory (fabric-cicd requirement).
+# find_value = the REAL dev GUID as committed in the item definitions;
+# replace_value = what it becomes when publishing to each environment.
+find_replace:
+  # --- Notebook metadata ----------------------------------------------------
+  # Dev MartaPulse_LH lakehouse id (notebook META default_lakehouse)
+  - find_value: "a1710f51-a81f-4435-ba96-883ba5514618"
+    replace_value:
+      test: "$items.Lakehouse.MartaPulse_LH.id"
+      prod: "$items.Lakehouse.MartaPulse_LH.id"
+
+  # Dev workspace id (notebook META default_lakehouse_workspace_id)
+  - find_value: "78970af8-720e-41cf-8075-553799bdcdd3"
+    replace_value:
+      test: "$workspace.id"
+      prod: "$workspace.id"
+
+  # --- PL_GTFS_Static_Ingest ------------------------------------------------
+  # Lakehouse artifactId as exported inside the pipeline's linkedService
+  # (byte-shuffled representation of the same dev lakehouse id)
+  - find_value: "a5514618-883b-ba96-4435-a81fa1710f51"
+    replace_value:
+      test: "$items.Lakehouse.MartaPulse_LH.id"
+      prod: "$items.Lakehouse.MartaPulse_LH.id"
+
+  # Notebook activity targets (dev item ids -> per-env ids)
+  - find_value: "fce3dcb2-3c6e-4601-8ea9-7ee4e44f957a"   # NB_Bronze_GTFS_Unzip
+    replace_value:
+      test: "$items.Notebook.NB_Bronze_GTFS_Unzip.id"
+      prod: "$items.Notebook.NB_Bronze_GTFS_Unzip.id"
+  - find_value: "27251a49-04de-4950-97ab-31a12a481fee"   # NB_Silver_Schedule_Conform
+    replace_value:
+      test: "$items.Notebook.NB_Silver_Schedule_Conform.id"
+      prod: "$items.Notebook.NB_Silver_Schedule_Conform.id"
+
+  # HTTP connection (itsmarta.com). Connections are tenant-scoped: share this
+  # one with the marta-pulse-github SP and the same GUID works everywhere.
+  - find_value: "2cf66fd8-0eb9-44e0-b09b-538037c99854"
+    replace_value:
+      test: "2cf66fd8-0eb9-44e0-b09b-538037c99854"
+      prod: "2cf66fd8-0eb9-44e0-b09b-538037c99854"
+
+  # --- PL_Telemetry_Refresh (placeholders from the repo-born definition) ----
+  - find_value: "00000000-0000-0000-0000-0000000nb001"
+    replace_value:
+      test: "$items.Notebook.NB_Silver_Telemetry_Stream.id"
+      prod: "$items.Notebook.NB_Silver_Telemetry_Stream.id"
+  - find_value: "00000000-0000-0000-0000-0000000nb002"
+    replace_value:
+      test: "$items.Notebook.NB_Gold_Deviation.id"
+      prod: "$items.Notebook.NB_Gold_Deviation.id"
+  - find_value: "00000000-0000-0000-0000-0000000nb003"
+    replace_value:
+      test: "$items.Notebook.NB_Gold_Headway_Bunching.id"
+      prod: "$items.Notebook.NB_Gold_Headway_Bunching.id"
+  - find_value: "00000000-0000-0000-0000-0000000wsdev"
+    replace_value:
+      test: "$workspace.id"
+      prod: "$workspace.id"
