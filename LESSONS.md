@@ -335,7 +335,18 @@ changed (in code or in process) so the rebuild doesn't repeat it.
     the contract instead of implying it, works retroactively on stored data,
     and makes the downstream filter self-clearing rather than a hand-entered
     cutover time.
-62. **Same wheel, same feed_version across platforms** (`9f6554cafaa7903f` in
+62. **The project's headline finding was the bug.** Build #1 concluded
+    "52% early / 2.6% late — MARTA pads its schedules". That was the
+    poll-timestamp fallback (LESSON #58) at scale: a poll time necessarily
+    precedes the scheduled arrival of every upcoming stop, so the artifact
+    manufactures "early" and nothing else. Corrected, the same feed reports
+    median +36s with a late tail at evening peak — the opposite conclusion.
+    A result that flatters a neat narrative deserves the most scrutiny, not
+    the least, and "52% early" should have been interrogated the moment it
+    appeared rather than written up. The giveaway was in the data all along:
+    the early tail had no counterpart late tail, and real operations are
+    roughly symmetric around a positive median.
+63. **Same wheel, same feed_version across platforms** (`9f6554cafaa7903f` in
     both Fabric and Databricks) — the portability of the canonical core is
     verifiable, not just claimed.
 

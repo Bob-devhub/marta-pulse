@@ -15,6 +15,10 @@
   MARTA stations, no key collisions) + `databricks/src/gold_rail_deviation.py`
   (direction-aware nearest-scheduled match). `DIRECTION` now rides in on
   `bearing`; GTFS `direction_id` meaning is inferred from trip geometry.
+- [ ] **Re-do the Fabric analysis with corrected data** — the "52% early"
+  conclusion is void (LESSON #62). Fabric's Gold was built entirely from
+  schema 1.0 rows and needs the same purge + rebuild once the bus fix is
+  ported there.
 - [ ] **Rail OTP is agency-reported, bus is measured** — the two rows in
   `fact_schedule_deviation` answer subtly different questions. Label them
   separately on any dashboard tile; never present a blended OTP number.
