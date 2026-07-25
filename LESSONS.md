@@ -193,5 +193,17 @@ changed (in code or in process) so the rebuild doesn't repeat it.
     as Direct ingestion with the existing mapping → recreate materialized
     views, re-enable OneLake availability, re-verify the Lakehouse shortcut.
 
+43. **Recreating a Function App orphans its Key Vault role assignment.** The
+    new managed identity has a different principalId; the old grant lingers
+    and looks fine in `az role assignment list`. Compare
+    `functionapp identity show --query principalId` against the assignee on
+    the vault — if they differ, grant the new one (and delete the orphan).
+44. **A green check on a Key Vault reference only means it resolved** — not
+    that the secret's *content* is valid. "Connection string is either blank
+    or malformed" persisted after the identity fix because the secret itself
+    held a bad value. Setting the connection string directly as an app
+    setting isolates reference-resolution from secret-content in one step;
+    restore the reference (with a corrected secret) afterward.
+
 *Standing practice: every issue hit and resolved in this project gets an
 entry here, in the same commit as (or right after) the fix.*
