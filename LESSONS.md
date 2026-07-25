@@ -301,7 +301,29 @@ changed (in code or in process) so the rebuild doesn't repeat it.
     field that was in the payload the whole time — and to `DELETE` the rows
     the retired method wrote, since `MERGE ... whenNotMatchedInsertAll`
     leaves discredited data in place forever.
-58. **Same wheel, same feed_version across platforms** (`9f6554cafaa7903f` in
+58. **`a or b` on a timestamp is a silent lie.** `event_ts=_epoch_to_iso(
+    best.get("time") or feed_ts)` looked like sensible defensiveness. But a
+    GTFS-RT `StopTimeUpdate` may legally carry neither an absolute time nor
+    a delay, and for those rows `event_ts` quietly stopped meaning
+    "predicted arrival" and started meaning "when we polled" — with nothing
+    in the record marking the difference. Gold then scored a 20:44 poll
+    against a 00:35 scheduled arrival and reported the bus 3.8 hours early:
+    235k rows, 12% of the fact table. Null is honest; a plausible wrong
+    value is not. Fallbacks are only safe between values that mean the
+    same thing.
+59. **Check whether the fix that worked last time even applies.** After
+    rail was solved by preferring the agency's own `delay`, the obvious move
+    was to do the same for bus. One query first: `delay` is NULL on all
+    4.3M bus rows — MARTA doesn't populate it in TripUpdates. The symmetric
+    fix was unavailable, and assuming it would have quietly produced an
+    all-null metric.
+60. **Contamination that can't be distinguished must be fenced off by
+    time.** Pre-fix rows are indistinguishable from good ones in Silver, so
+    "rebuild from Silver" would have faithfully reproduced the bug. Hence
+    the `min_ingest_ts` floor: rebuild only from data ingested after the
+    producer was fixed, and accept the gap rather than launder bad rows
+    through a recompute.
+61. **Same wheel, same feed_version across platforms** (`9f6554cafaa7903f` in
     both Fabric and Databricks) — the portability of the canonical core is
     verifiable, not just claimed.
 

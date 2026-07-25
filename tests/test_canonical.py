@@ -3,6 +3,57 @@ from pathlib import Path
 
 import pytest
 
+from marta_pulse.canonical import normalize_bus_trip_update
+
+
+def _tu(stop_time_updates, feed_ts=1769000000):
+    return {
+        "tripUpdate": {
+            "trip": {"tripId": "T1", "routeId": "R1"},
+            "vehicle": {"id": "V1"},
+            "timestamp": feed_ts,
+            "stopTimeUpdate": stop_time_updates,
+        }
+    }
+
+
+def test_stop_time_update_without_time_or_delay_is_dropped():
+    """The poll timestamp is not an observation.
+
+    A StopTimeUpdate carrying neither an absolute time nor a delay says
+    nothing about schedule adherence. Substituting feed_ts made Gold score
+    a poll against a scheduled arrival hours later (LESSON #58).
+    """
+    events = normalize_bus_trip_update(_tu([{"stopId": "S1", "stopSequence": 3}]))
+    assert events == []
+
+
+def test_stop_time_update_with_time_is_kept():
+    events = normalize_bus_trip_update(
+        _tu([{"stopId": "S1", "stopSequence": 3, "arrival": {"time": 1769003600}}])
+    )
+    assert len(events) == 1
+    assert events[0]["event_ts"].startswith("2026-")
+    # The predicted arrival, never the feed timestamp
+    assert events[0]["event_ts"] != events[0]["ingest_ts"]
+
+
+def test_stop_time_update_with_delay_only_is_kept_without_inventing_a_time():
+    events = normalize_bus_trip_update(
+        _tu([{"stopId": "S1", "stopSequence": 3, "arrival": {"delay": 120}}])
+    )
+    assert len(events) == 1
+    assert events[0]["delay_seconds"] == 120
+    assert events[0]["event_ts"] is None
+
+
+def test_departure_is_used_when_arrival_absent():
+    events = normalize_bus_trip_update(
+        _tu([{"stopId": "S1", "departure": {"time": 1769003600}}])
+    )
+    assert len(events) == 1
+    assert events[0]["event_ts"] is not None
+
 from marta_pulse.canonical import (
     CANONICAL_FIELDS,
     normalize_bus_trip_update,

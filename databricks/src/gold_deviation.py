@@ -16,6 +16,14 @@ from marta_pulse.deviation import (
 dbutils.widgets.text("catalog", "marta_pulse")
 CATALOG = dbutils.widgets.get("catalog")
 
+# Rows ingested before wheel 0.3.0 may carry the poll timestamp in event_ts
+# instead of a predicted arrival (LESSON #58), and the two are
+# indistinguishable after the fact. Set this to the moment the Function was
+# upgraded so the rebuild can't re-ingest contaminated history; leave empty
+# once no pre-0.3.0 rows remain in Silver.
+dbutils.widgets.text("min_ingest_ts", "")
+MIN_INGEST_TS = dbutils.widgets.get("min_ingest_ts").strip()
+
 FACT = f"{CATALOG}.gold.fact_schedule_deviation"
 AGG = f"{CATALOG}.gold.agg_otp_route_hour"
 
@@ -55,13 +63,29 @@ sched_instant_udf = F.udf(
 # COMMAND ----------
 
 if spark.catalog.tableExists(FACT):
-    hwm = spark.table(FACT).agg(F.max("ingest_ts_utc")).first()[0]
+    # Scoped to bus: gold_rail_deviation writes to the same table afterwards,
+    # and an unscoped max would advance the watermark past bus rows that were
+    # never processed.
+    hwm = (
+        spark.table(FACT).where("mode = 'bus'")
+        .agg(F.max("ingest_ts_utc")).first()[0]
+    )
 else:
     hwm = None
 
 obs = (
     spark.table(f"{CATALOG}.silver.telemetry_conformed")
-    .where("event_type IN ('trip_update','rail_arrival') AND stop_id IS NOT NULL")
+    .where("event_type = 'trip_update' AND stop_id IS NOT NULL")
+    # Rail is handled by gold_rail_deviation from the agency's own DELAY.
+    # event_ts must be a real predicted arrival: rows ingested before 0.3.0
+    # may carry a poll timestamp instead, and are excluded by the rebuild.
+    .where("event_ts_utc IS NOT NULL")
+)
+if MIN_INGEST_TS:
+    obs = obs.where(F.col("ingest_ts") >= F.lit(MIN_INGEST_TS).cast("timestamp"))
+    print(f"floor: only observations ingested at/after {MIN_INGEST_TS}")
+obs = (
+    obs
     .withColumn("ingest_ts_utc", F.col("ingest_ts"))
 )
 if hwm:
@@ -79,6 +103,14 @@ deviation = (
         sched,
         (F.col("o.trip_id") == F.col("s.trip_id"))
         & (F.col("o.stop_id") == F.col("s.stop_id"))
+        # 1,443 trip/stop pairs are served twice (loops, or a stop passed in
+        # both directions). Without stop_sequence the join picked one of the
+        # two scheduled times arbitrarily. The feed doesn't always supply it,
+        # so require equality only when it does.
+        & (
+            F.col("o.stop_sequence").isNull()
+            | (F.col("o.stop_sequence") == F.col("s.stop_sequence"))
+        )
         & (F.col("o.service_date") >= F.col("s.effective_from"))
         & (
             F.col("s.effective_to").isNull()

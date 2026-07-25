@@ -131,6 +131,14 @@ def normalize_bus_trip_update(entity: dict) -> list[dict]:
         arr = stu.get("arrival") or {}
         dep = stu.get("departure") or {}
         best = arr or dep
+        # A StopTimeUpdate may legally carry neither an absolute time nor a
+        # delay. Such a row says nothing about schedule adherence, and the
+        # previous `best.get("time") or feed_ts` fallback silently turned it
+        # into "the bus is at this stop *now*" -- Gold then scored a 20:44
+        # poll against a 00:35 scheduled arrival and called it 3.8 hours
+        # early (LESSON #58). Drop them instead of inventing an observation.
+        if best.get("time") is None and best.get("delay") is None:
+            continue
         ev = _blank_event()
         ev.update(
             mode="bus",
@@ -141,7 +149,10 @@ def normalize_bus_trip_update(entity: dict) -> list[dict]:
             stop_id=stu.get("stopId"),
             stop_sequence=stu.get("stopSequence"),
             delay_seconds=best.get("delay"),
-            event_ts=_epoch_to_iso(best.get("time") or feed_ts),
+            # Never fall back to feed_ts: event_ts means "predicted arrival"
+            # for a trip_update, and conflating it with the poll time is
+            # undetectable downstream. Null is honest; a wrong timestamp is not.
+            event_ts=_epoch_to_iso(best.get("time")),
             source_feed="marta_bus_tripupdates",
         )
         ev["event_id"] = _event_id(
