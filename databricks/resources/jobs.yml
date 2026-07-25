@@ -1,0 +1,71 @@
+resources:
+  jobs:
+    # Weekly batch spine: GTFS static download -> Bronze -> Silver SCD2
+    gtfs_static_weekly:
+      name: "[${bundle.target}] marta-pulse GTFS static weekly"
+      schedule:
+        quartz_cron_expression: "0 0 7 ? * MON"   # Mondays 07:00 UTC
+        timezone_id: UTC
+      job_clusters: &jc
+        - job_cluster_key: main
+          new_cluster:
+            spark_version: ${var.spark_version}
+            node_type_id: ${var.node_type}
+            num_workers: 1
+            data_security_mode: SINGLE_USER
+      tasks:
+        - task_key: bronze_gtfs_ingest
+          job_cluster_key: main
+          notebook_task:
+            notebook_path: ../src/bronze_gtfs_ingest.py
+            base_parameters: &params
+              catalog: ${var.catalog}
+          libraries: &libs
+            - whl: ../../dist/*.whl
+        - task_key: silver_schedule_conform
+          depends_on: [{ task_key: bronze_gtfs_ingest }]
+          job_cluster_key: main
+          notebook_task:
+            notebook_path: ../src/silver_schedule_conform.py
+            base_parameters: *params
+          libraries: *libs
+
+    # Fast loop: Event Hub -> Bronze -> Silver -> Gold, every 15 minutes
+    telemetry_refresh:
+      name: "[${bundle.target}] marta-pulse telemetry refresh"
+      schedule:
+        quartz_cron_expression: "0 0/15 * * * ?"
+        timezone_id: UTC
+      job_clusters: *jc
+      tasks:
+        - task_key: bronze_telemetry_stream
+          job_cluster_key: main
+          notebook_task:
+            notebook_path: ../src/bronze_telemetry_stream.py
+            base_parameters:
+              catalog: ${var.catalog}
+              eventhub_namespace: ${var.eventhub_namespace}
+              eventhub_name: ${var.eventhub_name}
+              secret_scope: ${var.secret_scope}
+          libraries: *libs
+        - task_key: silver_telemetry_conform
+          depends_on: [{ task_key: bronze_telemetry_stream }]
+          job_cluster_key: main
+          notebook_task:
+            notebook_path: ../src/silver_telemetry_conform.py
+            base_parameters: *params
+          libraries: *libs
+        - task_key: gold_deviation
+          depends_on: [{ task_key: silver_telemetry_conform }]
+          job_cluster_key: main
+          notebook_task:
+            notebook_path: ../src/gold_deviation.py
+            base_parameters: *params
+          libraries: *libs
+        - task_key: gold_headway_bunching
+          depends_on: [{ task_key: gold_deviation }]
+          job_cluster_key: main
+          notebook_task:
+            notebook_path: ../src/gold_headway_bunching.py
+            base_parameters: *params
+          libraries: *libs

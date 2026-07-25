@@ -1,0 +1,58 @@
+# Databricks Asset Bundle — MARTA Pulse build #3 (end-to-end on Databricks).
+# Same canonical core (marta_pulse wheel), third orchestration.
+#
+# Topology change vs Fabric-only: the Azure Function publishes to a REAL
+# Azure Event Hub; Databricks consumes it via the Kafka-compatible endpoint
+# (consumer group "databricks") while Fabric's Eventstream can consume the
+# same hub on its own consumer group. One producer, N platforms.
+#
+# Usage:
+#   databricks bundle validate -t dev
+#   databricks bundle deploy   -t dev
+#   databricks bundle run      -t dev gtfs_static_weekly
+bundle:
+  name: marta-pulse
+
+artifacts:
+  marta_pulse_wheel:
+    type: whl
+    path: .
+    build: python -m build --wheel
+
+include:
+  - databricks/resources/*.yml
+
+variables:
+  catalog:
+    description: Unity Catalog catalog for all MARTA Pulse schemas
+    default: marta_pulse
+  eventhub_namespace:
+    description: Event Hubs namespace (without .servicebus.windows.net)
+    default: ehns-martapulse-dev
+  eventhub_name:
+    description: Event hub carrying canonical telemetry events
+    default: telemetry
+  secret_scope:
+    description: Databricks secret scope holding eventhub-connection
+    default: marta-pulse
+  node_type:
+    default: Standard_DS3_v2
+  spark_version:
+    default: 15.4.x-scala2.12
+
+targets:
+  dev:
+    default: true
+    workspace:
+      host: https://adb-REPLACE-DEV.azuredatabricks.net
+  test:
+    workspace:
+      host: https://adb-REPLACE-TEST.azuredatabricks.net
+    variables:
+      catalog: marta_pulse_test
+      eventhub_namespace: ehns-martapulse-dev   # shared hub, separate consumer offsets
+  prod:
+    workspace:
+      host: https://adb-REPLACE-PROD.azuredatabricks.net
+    variables:
+      catalog: marta_pulse_prod
