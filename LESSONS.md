@@ -205,5 +205,24 @@ changed (in code or in process) so the rebuild doesn't repeat it.
     setting isolates reference-resolution from secret-content in one step;
     restore the reference (with a corrected secret) afterward.
 
+## Build #3 — Databricks
+
+45. **Serverless-only workspaces reject `job_clusters`** ("Only serverless
+    compute is supported"). Asset Bundle jobs need `environments:` with a
+    `spec.dependencies` list for wheels instead of the classic `libraries:`
+    block, and no cluster definitions at all.
+46. **`databricks bundle deploy` shells out to whatever `python` is on PATH**
+    — not your venv. It needed `build` installed in that interpreter
+    (Anaconda's, here).
+47. **Always validate a downloaded archive before parsing it.** MARTA's site
+    returns non-zip content to some egress networks with a default
+    `python-requests` user-agent; the symptom was a bare `BadZipFile` deep in
+    the library. Fix: set a real UA, `raise_for_status()`, check the `PK`
+    magic bytes, and print status/content-type/length so the next failure is
+    self-diagnosing.
+48. **Same wheel, same feed_version across platforms** (`9f6554cafaa7903f` in
+    both Fabric and Databricks) — the portability of the canonical core is
+    verifiable, not just claimed.
+
 *Standing practice: every issue hit and resolved in this project gets an
 entry here, in the same commit as (or right after) the fix.*

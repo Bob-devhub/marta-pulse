@@ -35,16 +35,13 @@ variables:
   secret_scope:
     description: Databricks secret scope holding eventhub-connection
     default: marta-pulse
-  node_type:
-    default: Standard_DS3_v2
-  spark_version:
-    default: 15.4.x-scala2.12
+  # (no cluster vars: this workspace is serverless-only)
 
 targets:
   dev:
     default: true
     workspace:
-      host: https://adb-REPLACE-DEV.azuredatabricks.net
+      host: https://adb-7405619595288679.19.azuredatabricks.net
   test:
     workspace:
       host: https://adb-REPLACE-TEST.azuredatabricks.net

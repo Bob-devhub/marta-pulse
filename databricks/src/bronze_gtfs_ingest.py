@@ -20,7 +20,23 @@ REGISTRY = f"{CATALOG}.bronze.gtfs_feed_registry"
 
 # COMMAND ----------
 
-zip_bytes = requests.get(GTFS_URL, timeout=120).content
+# MARTA's site 302s and rejects default user-agents from some networks;
+# verify we actually got a zip before handing it to zipfile (a plain
+# .content on an HTML error page fails later with a confusing BadZipFile).
+resp = requests.get(
+    GTFS_URL,
+    timeout=180,
+    allow_redirects=True,
+    headers={"User-Agent": "marta-pulse/0.2 (+https://github.com/Bob-devhub)"},
+)
+resp.raise_for_status()
+zip_bytes = resp.content
+print(f"HTTP {resp.status_code} {resp.headers.get('Content-Type')} "
+      f"{len(zip_bytes):,} bytes from {resp.url}")
+if zip_bytes[:2] != b"PK":
+    preview = zip_bytes[:300].decode("utf-8", errors="replace")
+    raise RuntimeError(f"Not a zip. First bytes: {preview!r}")
+
 version = feed_version(zip_bytes)
 ingest_date = spark.sql("SELECT current_date()").first()[0].isoformat()
 print(f"feed_version={version} ingest_date={ingest_date} size={len(zip_bytes):,}")
