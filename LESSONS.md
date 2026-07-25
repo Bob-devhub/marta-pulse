@@ -220,7 +220,13 @@ changed (in code or in process) so the rebuild doesn't repeat it.
     the library. Fix: set a real UA, `raise_for_status()`, check the `PK`
     magic bytes, and print status/content-type/length so the next failure is
     self-diagnosing.
-48. **Same wheel, same feed_version across platforms** (`9f6554cafaa7903f` in
+48. **A second remote runs your workflows too.** Pushing the same tree to a
+    mirror repo fired the Fabric/Function CD there, where none of the OIDC
+    secrets exist — `azure/login` failed with "Not all values are present."
+    GitHub does **not** expose the `secrets` context in a job-level `if`, so
+    gate on the paired repo *variable* (`vars.FUNCTION_APP_NAME != ''`)
+    instead: present where the job should run, absent everywhere else.
+49. **Same wheel, same feed_version across platforms** (`9f6554cafaa7903f` in
     both Fabric and Databricks) — the portability of the canonical core is
     verifiable, not just claimed.
 

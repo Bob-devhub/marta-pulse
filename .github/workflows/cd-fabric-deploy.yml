@@ -47,6 +47,10 @@ jobs:
 
   deploy-function:
     needs: build
+    # Skips cleanly in forks/mirrors that carry the same tree but none of the
+    # Azure OIDC secrets (e.g. the Databricks repo). Secrets can't be tested
+    # in a job-level `if`, so we gate on the paired repo variable instead.
+    if: vars.FUNCTION_APP_NAME != ''
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
