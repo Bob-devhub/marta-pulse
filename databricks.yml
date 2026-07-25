@@ -28,7 +28,7 @@ variables:
     default: marta_pulse
   eventhub_namespace:
     description: Event Hubs namespace (without .servicebus.windows.net)
-    default: ehns-martapulse-dev
+    default: ehns-martapulse-databricks
   eventhub_name:
     description: Event hub carrying canonical telemetry events
     default: telemetry
@@ -50,7 +50,7 @@ targets:
       host: https://adb-REPLACE-TEST.azuredatabricks.net
     variables:
       catalog: marta_pulse_test
-      eventhub_namespace: ehns-martapulse-dev   # shared hub, separate consumer offsets
+      eventhub_namespace: ehns-martapulse-databricks   # shared hub, separate consumer offsets
   prod:
     workspace:
       host: https://adb-REPLACE-PROD.azuredatabricks.net

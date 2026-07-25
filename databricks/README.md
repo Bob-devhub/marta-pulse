@@ -18,7 +18,7 @@ connection string — the code already speaks Event Hub protocol.
 
 ## One-time setup
 
-1. **Event Hub**: create namespace `ehns-martapulse-dev` (Standard, 1 TU) +
+1. **Event Hub**: create namespace `ehns-martapulse-databricks` (Standard, 1 TU) +
    hub `telemetry` (2+ partitions); consumer groups `databricks` and
    `fabric`. Repoint the Function's `eventstream-connection` secret and
    restart it. (If keeping Fabric fed: switch the Eventstream's source to an
