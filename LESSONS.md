@@ -323,7 +323,19 @@ changed (in code or in process) so the rebuild doesn't repeat it.
     the `min_ingest_ts` floor: rebuild only from data ingested after the
     producer was fixed, and accept the gap rather than launder bad rows
     through a recompute.
-61. **Same wheel, same feed_version across platforms** (`9f6554cafaa7903f` in
+61. **Two builds shipped under one version number.** The rail fix and the
+    bus fix were separate edits with no version bump between them, so both
+    wheels were "0.3.0". The rail change was deployed; the bus change wasn't;
+    and `bearing IS NOT NULL` — used as a proxy for "0.3.0 is live" —
+    confirmed the wrong one. The tell was chronological: the cutover
+    timestamp (20:09) predated bad rows (20:43+), which is impossible if the
+    fix were live. Bump the version on every change that alters behaviour,
+    however small, and prefer a marker carried *in the payload*
+    (`schema_version`) over one inferred from a field's presence: it states
+    the contract instead of implying it, works retroactively on stored data,
+    and makes the downstream filter self-clearing rather than a hand-entered
+    cutover time.
+62. **Same wheel, same feed_version across platforms** (`9f6554cafaa7903f` in
     both Fabric and Databricks) — the portability of the canonical core is
     verifiable, not just claimed.
 

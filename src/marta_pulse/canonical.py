@@ -21,7 +21,12 @@ from zoneinfo import ZoneInfo
 
 from marta_pulse.rail_match import direction_to_bearing
 
-SCHEMA_VERSION = "1.0"
+# 1.1 (wheel 0.3.1): event_ts on a trip_update is a *predicted arrival* and
+# nothing else. It may be null, and is never the feed's poll timestamp
+# (LESSON #58). Rail carries DIRECTION in `bearing`. Bumped so consumers can
+# tell the two contracts apart in the data itself — package version alone
+# proved insufficient when two builds shipped under one number (LESSON #61).
+SCHEMA_VERSION = "1.1"
 
 CANONICAL_FIELDS = [
     "event_id",        # deterministic hash: dedupe key across retries

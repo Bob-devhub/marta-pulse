@@ -77,9 +77,12 @@ obs = (
     spark.table(f"{CATALOG}.silver.telemetry_conformed")
     .where("event_type = 'trip_update' AND stop_id IS NOT NULL")
     # Rail is handled by gold_rail_deviation from the agency's own DELAY.
-    # event_ts must be a real predicted arrival: rows ingested before 0.3.0
-    # may carry a poll timestamp instead, and are excluded by the rebuild.
     .where("event_ts_utc IS NOT NULL")
+    # Schema 1.0 rows may carry the poll timestamp in event_ts instead of a
+    # predicted arrival, and the two are indistinguishable after the fact
+    # (LESSON #58). Filtering on the payload's own contract version is
+    # deterministic and self-clearing — unlike a hand-entered cutover time.
+    .where("schema_version <> '1.0'")
 )
 if MIN_INGEST_TS:
     obs = obs.where(F.col("ingest_ts") >= F.lit(MIN_INGEST_TS).cast("timestamp"))

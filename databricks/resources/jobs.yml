@@ -14,7 +14,7 @@ resources:
           spec: &env_spec
             client: "3"
             dependencies:
-              - ../../dist/marta_pulse-0.3.0-py3-none-any.whl
+              - ../../dist/marta_pulse-0.3.1-py3-none-any.whl
       tasks:
         - task_key: bronze_gtfs_ingest
           environment_key: default
