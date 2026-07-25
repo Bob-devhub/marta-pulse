@@ -35,6 +35,14 @@ resources:
       schedule:
         quartz_cron_expression: "0 0/15 * * * ?"
         timezone_id: UTC
+      # Job-level parameters reach notebook tasks as widgets. Empty by
+      # default so scheduled runs are unaffected; set it on a manual run to
+      # fence the bus rebuild off from pre-0.3.0 rows (LESSON #60):
+      #   databricks bundle run -t dev telemetry_refresh \
+      #     --params min_ingest_ts=2026-07-25T21:30:00
+      parameters:
+        - name: min_ingest_ts
+          default: ""
       environments:
         - environment_key: default
           spec: *env_spec
