@@ -6,3 +6,4 @@ protobuf>=4.25
 # The marta-pulse wheel line is appended at deploy time (CD pipeline or the
 # manual publish step). Do NOT commit a hard-coded wheel filename here — a
 # stale pin caused a silent version mismatch in the first build.
+./marta_pulse-0.3.1-py3-none-any.whl
