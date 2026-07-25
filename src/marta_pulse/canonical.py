@@ -19,6 +19,8 @@ from datetime import datetime, timezone
 from typing import Any
 from zoneinfo import ZoneInfo
 
+from marta_pulse.rail_match import direction_to_bearing
+
 SCHEMA_VERSION = "1.0"
 
 CANONICAL_FIELDS = [
@@ -203,6 +205,11 @@ def normalize_rail(record: dict) -> list[dict]:
         stop_id=record.get("STATION"),
         lat=float(record["LATITUDE"]) if record.get("LATITUDE") else None,
         lon=float(record["LONGITUDE"]) if record.get("LONGITUDE") else None,
+        # DIRECTION rides in on `bearing` (degrees). Without it, rail
+        # observations cannot be matched to a direction of travel and a
+        # northbound train gets scored against the nearest southbound
+        # scheduled arrival -- plausible-looking and meaningless (LESSON #53).
+        bearing=direction_to_bearing(record.get("DIRECTION")),
         delay_seconds=_parse_rail_delay(record.get("DELAY")),
         event_ts=_rail_event_time_to_utc_iso(record.get("EVENT_TIME")),
         source_feed="marta_rail_realtime",

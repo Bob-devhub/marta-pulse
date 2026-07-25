@@ -226,7 +226,64 @@ changed (in code or in process) so the rebuild doesn't repeat it.
     GitHub does **not** expose the `secrets` context in a job-level `if`, so
     gate on the paired repo *variable* (`vars.FUNCTION_APP_NAME != ''`)
     instead: present where the job should run, absent everywhere else.
-49. **Same wheel, same feed_version across platforms** (`9f6554cafaa7903f` in
+49. **Event Hubs' Kafka SASL rejects the *whole* connection string** with
+    "not of the expected format / unexpected properties" for anything beyond
+    `Endpoint` / `SharedAccessKeyName` / `SharedAccessKey`. A trailing
+    `;EntityPath=` (Kafka gets the topic from `subscribe`), shell-captured
+    quotes, or a newline all produce the same opaque error — and it surfaces
+    as a `StreamingQueryException` a hundred stack frames deep. Sanitize the
+    string in code and assert its shape up front; secrets are redacted from
+    output, so print derived facts (length, key names, dropped keys) instead.
+    Corollary: a placeholder pasted verbatim from documentation stores
+    happily and fails only at the far end of the pipeline. Never hand-type a
+    secret — pipe it from `az ... --query primaryConnectionString -o tsv`
+    straight into `databricks secrets put-secret`, and validate on read.
+50. **Rail never reaches Gold — a silent inner-join drop.** `normalize_rail`
+    sets `stop_id` to the station *name* and leaves `trip_id` null, but the
+    deviation join is `trip_id AND stop_id`, inner. Every rail row vanishes
+    with no error and no quarantine row; the only symptom is that
+    `GROUP BY mode` on the fact table returns one row. Both builds had it.
+    Lesson: when a pipeline fans in multiple feeds, assert per-feed row
+    counts at every layer boundary — a feed reaching zero is invisible
+    otherwise, because "no rows" is not an error anywhere in Spark.
+51. **`trip_update` events are predictions, not observations.** Their
+    `event_ts` is a forecast arrival, legitimately ahead of wall clock (605k
+    future-dated rows here). OTP computed over them measures *predicted*
+    punctuality — what the agency expects, not what happened. Comparing an
+    afternoon of predictions against a multi-day archive that included
+    overnight service produced a 27-point swing in "early" and looked like a
+    regression; it was population mix. Always pin the window and the event
+    mix before treating a metric shift as a bug.
+52. **A join that needs direction, without direction, is worse than no
+    join.** Rail stations have one platform stop per direction, so matching
+    a train to the nearest scheduled arrival *ignoring* direction happily
+    scores a northbound train against a southbound trip — small deviations,
+    plausible dashboard, meaningless numbers. The feed had `DIRECTION` all
+    along; `normalize_rail` was discarding it. It now rides in on `bearing`,
+    an existing canonical field that already means "direction of travel", so
+    no schema change and no Eventstream/KQL churn.
+53. **Infer agency conventions from data, don't hardcode them.** What GTFS
+    `direction_id` 0 and 1 mean geographically is not in the spec. Rather
+    than assume, derive it per route from the net latitude/longitude change
+    between each trip's first and last stop. Self-correcting across feed
+    versions, and it fails loudly rather than silently if a route changes.
+54. **Nearest-neighbour matching has a ceiling, and it's half the headway.**
+    Assigning an observation to its closest scheduled arrival can never
+    report a delay larger than half the headway — a train 12 minutes late on
+    a 10-minute headway reads as 2 minutes early against the *next* trip. So
+    the metric degrades exactly when service is worst. Emit
+    `match_method` / `match_ambiguous` / `match_direction_known` and keep
+    inferred rows separable from measured ones; never average an assignment
+    into a measurement.
+55. **Serverless blocks `spark.conf.set` for Delta schema evolution.**
+    `spark.databricks.delta.schema.autoMerge.enabled` raises
+    `CONFIG_NOT_AVAILABLE` outright, and `.option("mergeSchema", true)` does
+    not apply to `MERGE`. Add the columns explicitly with an idempotent
+    `ALTER TABLE ... ADD COLUMNS` guarded by a `columns` check — it works on
+    every compute type and makes the schema change reviewable in code.
+    Related: two tasks that MERGE into the same Delta table must be chained,
+    not parallel, or they race on both the ALTER and the commit.
+56. **Same wheel, same feed_version across platforms** (`9f6554cafaa7903f` in
     both Fabric and Databricks) — the portability of the canonical core is
     verifiable, not just claimed.
 

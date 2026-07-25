@@ -19,6 +19,30 @@ CATALOG = dbutils.widgets.get("catalog")
 FACT = f"{CATALOG}.gold.fact_schedule_deviation"
 AGG = f"{CATALOG}.gold.agg_otp_route_hour"
 
+# The match_* columns were added after the table was first created. MERGE
+# won't evolve the target schema, and serverless refuses
+# spark.databricks.delta.schema.autoMerge.enabled outright, so add them
+# explicitly and idempotently before writing (LESSON #56).
+MATCH_COLUMNS = {
+    "match_method": "STRING",
+    "match_ambiguous": "BOOLEAN",
+    "match_direction_known": "BOOLEAN",
+}
+
+
+def ensure_match_columns(table: str) -> None:
+    if not spark.catalog.tableExists(table):
+        return
+    existing = set(spark.table(table).columns)
+    missing = {c: t for c, t in MATCH_COLUMNS.items() if c not in existing}
+    if missing:
+        cols = ", ".join(f"{c} {t}" for c, t in missing.items())
+        spark.sql(f"ALTER TABLE {table} ADD COLUMNS ({cols})")
+        print(f"added columns to {table}: {sorted(missing)}")
+
+
+ensure_match_columns(FACT)
+
 service_date_udf = F.udf(
     lambda ts: service_date_for(ts.replace(tzinfo=timezone.utc)) if ts else None,
     "date",
@@ -76,17 +100,24 @@ deviation = (
         .when(F.col("deviation_seconds") <= ON_TIME_LATE_SECONDS, "on_time")
         .otherwise("late"),
     )
+    # Bus joins on a real trip_id; rail is assigned to its nearest scheduled
+    # arrival (gold_rail_deviation). Tagging both keeps the two from being
+    # averaged together as if they were the same measurement.
+    .withColumn("match_method", F.lit("trip_id"))
+    .withColumn("match_ambiguous", F.lit(False))
+    .withColumn("match_direction_known", F.lit(True))
     .select(
         "o.event_id", "o.mode", "o.vehicle_id", "o.trip_id",
         F.coalesce("o.route_id", "o.sched_route_id").alias("route_id"),
         "o.stop_id", "o.service_date", "o.event_ts_utc", "o.ingest_ts_utc",
         "scheduled_ts_utc", "deviation_seconds", "otp_bucket",
         F.col("s.feed_version").alias("schedule_version"),
+        "match_method", "match_ambiguous", "match_direction_known",
     )
 )
 
 if not spark.catalog.tableExists(FACT):
-    deviation.write.format("delta").saveAsTable(FACT)
+    deviation.write.format("delta").option("mergeSchema", "true").saveAsTable(FACT)
 else:
     from delta.tables import DeltaTable
 

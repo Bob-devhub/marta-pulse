@@ -22,6 +22,36 @@ CHECKPOINT = f"/Volumes/{CATALOG}/bronze/checkpoints/telemetry_stream"
 
 conn = dbutils.secrets.get(SCOPE, "eventhub-connection")
 
+# Event Hubs' Kafka SASL handler rejects the whole string with an opaque
+# "not of the expected format / unexpected properties" if it carries anything
+# beyond Endpoint/SharedAccessKeyName/SharedAccessKey. The usual culprits:
+# a trailing ;EntityPath= (Kafka takes the topic from `subscribe`), quotes or
+# a newline captured by the shell when the secret was set, or a stray ';'.
+# Sanitize, then assert the shape — Databricks redacts the secret itself from
+# output, so we report only derived facts.
+_KEEP = ("Endpoint", "SharedAccessKeyName", "SharedAccessKey")
+
+conn = conn.strip().strip('"').strip("'").strip()
+_parts = [p for p in conn.split(";") if p.strip()]
+_dropped = [p.split("=", 1)[0] for p in _parts if p.split("=", 1)[0] not in _KEEP]
+conn = ";".join(p for p in _parts if p.split("=", 1)[0] in _KEEP)
+
+_keys = [p.split("=", 1)[0] for p in conn.split(";")]
+print(f"conn: {len(conn)} chars, keys={_keys}, dropped={_dropped}")
+if not conn.startswith("Endpoint=sb://"):
+    raise RuntimeError(
+        f"Secret {SCOPE}/eventhub-connection does not start with 'Endpoint=sb://' "
+        f"(starts with {conn[:14]!r}). Set the namespace-level connection string."
+    )
+for _required in ("SharedAccessKeyName=", "SharedAccessKey="):
+    if _required not in conn:
+        raise RuntimeError(f"Secret is missing {_required} — got keys {_keys}.")
+if f"//{EH_NS}." not in conn:
+    raise RuntimeError(
+        f"Secret points at a different namespace than {EH_NS} — check you copied "
+        f"the string from ehns-martapulse-databricks, not the older namespace."
+    )
+
 # COMMAND ----------
 
 # Canonical schema — mirrors marta_pulse.canonical.CANONICAL_FIELDS.

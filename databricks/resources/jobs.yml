@@ -14,7 +14,7 @@ resources:
           spec: &env_spec
             client: "3"
             dependencies:
-              - ../../dist/marta_pulse-0.2.0-py3-none-any.whl
+              - ../../dist/marta_pulse-0.3.0-py3-none-any.whl
       tasks:
         - task_key: bronze_gtfs_ingest
           environment_key: default
@@ -60,8 +60,19 @@ resources:
           notebook_task:
             notebook_path: ../src/gold_deviation.py
             base_parameters: *params
-        - task_key: gold_headway_bunching
+        # Serialized after gold_deviation on purpose: both MERGE into
+        # fact_schedule_deviation, and concurrent writers to one Delta table
+        # race on both the ALTER and the commit.
+        - task_key: gold_rail_deviation
           depends_on: [{ task_key: gold_deviation }]
+          environment_key: default
+          notebook_task:
+            notebook_path: ../src/gold_rail_deviation.py
+            base_parameters: *params
+        - task_key: gold_headway_bunching
+          depends_on:
+            - { task_key: gold_deviation }
+            - { task_key: gold_rail_deviation }
           environment_key: default
           notebook_task:
             notebook_path: ../src/gold_headway_bunching.py
