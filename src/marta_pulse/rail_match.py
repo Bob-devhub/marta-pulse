@@ -16,14 +16,17 @@ Rail is matched in two stages instead:
    given (stop, route, service day) take the scheduled arrival closest in
    time to the observation, within `MATCH_WINDOW_SECONDS`.
 
-Stage 2's bias must be understood before trusting the output. Assigning
-each observation to its *nearest* scheduled arrival cannot report a
-deviation larger than half the headway -- a train 12 minutes late on a
-10-minute headway looks 2 minutes early against the following trip. The
-metric is therefore reliable for detecting small deviations and unreliable
-for large ones, and it degrades exactly when service is most disrupted.
-`match_window_ok` and `match_ambiguous` are emitted so downstream analysis
-can quantify how much of the result is trustworthy rather than assuming it.
+**Stage 2 was tried and retired.** Validated against MARTA's own published
+DELAY, nearest-arrival matching correlated at 0.006 -- nil -- and 95% of
+matches were flagged ambiguous. It reports "time to the closest scheduled
+train", which collapses toward zero by construction and cannot exceed half
+the headway. Rail deviation now comes from the agency's DELAY field, which
+is computed against the trip identity the feed never exposes (LESSON #57).
+
+Stage 1 survives: the station crosswalk is deterministic and still needed
+to attribute observations to stops. The windowing helpers below are kept
+for the headway/bunching work, where "nearest scheduled" is the correct
+question rather than a proxy for a different one.
 """
 
 from __future__ import annotations

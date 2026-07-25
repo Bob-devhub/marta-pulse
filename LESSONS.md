@@ -283,7 +283,25 @@ changed (in code or in process) so the rebuild doesn't repeat it.
     every compute type and makes the schema change reviewable in code.
     Related: two tasks that MERGE into the same Delta table must be chained,
     not parallel, or they race on both the ALTER and the commit.
-56. **Same wheel, same feed_version across platforms** (`9f6554cafaa7903f` in
+56. **Validate a derived metric against an independent source before
+    publishing it — the derivation ran fine and was still wrong.** The
+    nearest-scheduled rail match produced 27,696 clean rows with a plausible
+    distribution. Correlated against MARTA's own published DELAY it scored
+    **0.006**: the agency measured ~103s average delay, we computed ~1s.
+    The method was answering "how close is the nearest scheduled train",
+    not "how late is this train", and no amount of inspecting our own output
+    would have revealed that — only the outside check did. A tight, tidy
+    distribution is a warning sign, not a success signal: real operations
+    are messy, and p5–p95 inside ±2 minutes should have been implausible on
+    its face.
+57. **Prefer the operator's own metric over one you reconstruct.** MARTA
+    computes DELAY against trip identity that the realtime feed never
+    exposes. No cleverness on our side recovers information the source
+    withheld. The right move was to delete the derivation and read the
+    field that was in the payload the whole time — and to `DELETE` the rows
+    the retired method wrote, since `MERGE ... whenNotMatchedInsertAll`
+    leaves discredited data in place forever.
+58. **Same wheel, same feed_version across platforms** (`9f6554cafaa7903f` in
     both Fabric and Databricks) — the portability of the canonical core is
     verifiable, not just claimed.
 

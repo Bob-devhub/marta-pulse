@@ -15,6 +15,9 @@
   MARTA stations, no key collisions) + `databricks/src/gold_rail_deviation.py`
   (direction-aware nearest-scheduled match). `DIRECTION` now rides in on
   `bearing`; GTFS `direction_id` meaning is inferred from trip geometry.
+- [ ] **Rail OTP is agency-reported, bus is measured** — the two rows in
+  `fact_schedule_deviation` answer subtly different questions. Label them
+  separately on any dashboard tile; never present a blended OTP number.
 - [ ] **Confirm the last rail station aliases** — `OMNI DOME` and possibly
   `LAKEWOOD` (GTFS may spell it "Lakewood/Ft McPherson") have no GTFS
   counterpart under the current rules. The coverage report printed by
