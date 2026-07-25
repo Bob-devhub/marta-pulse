@@ -9,3 +9,5 @@ build/
 functions/**/local.settings.json
 functions/**/*.whl
 .python_version
+
+.databricks/

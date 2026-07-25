@@ -179,5 +179,19 @@ changed (in code or in process) so the rebuild doesn't repeat it.
     one-time provisioning: bronze/silver/gold schemas, the `raw_events`
     shortcut, and an Environment with the current wheel set as default.
 
+41. **Changing a KQL table's column type invalidates its materialized
+    views** ("incompatible with source table"). Drop and recreate the views
+    (`.drop materialized-view` + `.create materialized-view`); use
+    `backfill=false` so they restart from live data instead of reprocessing
+    history on a small capacity.
+
+42. **`_1`-suffixed duplicate columns in a KQL table** = a second ingestion
+    path with inferred types got alter-merged in (Eventstream's Map-schema
+    wizard strikes again — reinforces #7). Recover with rename →
+    recreate clean from DatabaseSchema.kql → `.set-or-append` migrating
+    history with `coalesce(col, typecast(col_1))` → re-add the destination
+    as Direct ingestion with the existing mapping → recreate materialized
+    views, re-enable OneLake availability, re-verify the Lakehouse shortcut.
+
 *Standing practice: every issue hit and resolved in this project gets an
 entry here, in the same commit as (or right after) the fix.*

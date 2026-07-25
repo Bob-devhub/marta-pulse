@@ -1,4 +1,8 @@
 // MartaPulse_KQLDB bootstrap — canonical telemetry table + update policy
+// NOTE: management commands (.create/.drop) run ONE AT A TIME in a queryset —
+// put the cursor on each statement and execute individually.
+// If raw_events' schema ever changes, dependent materialized views must be
+// dropped and recreated (they bind to the source schema at creation).
 // event_ts is datetime: marta_pulse >=0.2.0 normalizes ALL modes (incl. rail)
 // to ISO-8601 UTC at the source, so Kusto parses it natively. This table is
 // the single Bronze write path — OneLake availability mirrors it to Delta,
